@@ -30,8 +30,10 @@ export AlphaInfoClient,
        AlphaInfoError, AuthError, RateLimitError,
        ValidationError, NotFoundError, ApiError, NetworkError
 
+import Base: close
+
 const DEFAULT_BASE_URL = "https://www.alphainfo.io"
-const SDK_VERSION = "1.5.10"
+const SDK_VERSION = "1.5.11"
 
 """
     MIN_FINGERPRINT_SAMPLES
@@ -102,6 +104,7 @@ mutable struct AlphaInfoClient
     base_url::String
     timeout::Int
     rate_limit::Union{Nothing,NamedTuple{(:limit,:remaining,:reset),Tuple{Int,Int,Int}}}
+    closed::Bool
 end
 
 function AlphaInfoClient(api_key::AbstractString;
@@ -112,7 +115,30 @@ function AlphaInfoClient(api_key::AbstractString;
             "api_key is required. Get one at https://alphainfo.io/register (format: 'ai_...')",
             0, nothing))
     end
-    AlphaInfoClient(String(api_key), rstrip(String(base_url), '/'), Int(timeout), nothing)
+    AlphaInfoClient(String(api_key), rstrip(String(base_url), '/'), Int(timeout), nothing, false)
+end
+
+"""
+    close(client::AlphaInfoClient)
+
+Mark the client as closed. Subsequent calls will throw `NetworkError`.
+
+Julia's HTTP.jl uses a global connection pool, so there is no
+per-client socket to release — this is a defensive marker for API
+parity with the other alphainfo SDKs. Idiomatic usage:
+
+    client = AlphaInfoClient(ENV["ALPHAINFO_API_KEY"])
+    try
+        analyze(client, signal, 1000)
+    finally
+        close(client)
+    end
+
+Safe to call more than once.
+"""
+function close(client::AlphaInfoClient)
+    client.closed = true
+    return nothing
 end
 
 # ---------------------------------------------------------------------------
@@ -121,6 +147,9 @@ end
 
 function _request(client::AlphaInfoClient, method::String, path::String;
                   body::Union{Nothing,Any} = nothing)
+    if client.closed
+        throw(NetworkError("client is closed — create a new AlphaInfoClient"))
+    end
     url = client.base_url * path
     headers = [
         "X-API-Key" => client.api_key,

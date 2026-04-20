@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.11] - 2026-04-20
+
+Connection cleanup improvements.
+
+- `Base.close(::AlphaInfoClient)` is now defined. Marks the client as
+  closed so subsequent calls throw `NetworkError("client is closed …")`.
+- Idempotent — safe inside a `try/finally`.
+- New `closed::Bool` field on `AlphaInfoClient` (default `false`).
+- Julia's `HTTP.jl` uses a global connection pool, so `close()` is
+  mostly a defensive marker for API parity with the other alphainfo
+  SDKs; still useful to avoid accidental use of stale clients.
+
 ## [1.5.10] - 2026-04-20
 
 Initial release — parity with Python SDK 1.5.10.

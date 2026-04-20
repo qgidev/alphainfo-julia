@@ -35,3 +35,27 @@ end
         nothing
     end
 end
+
+# ── Bloco 1.2 — close(client) ────────────────────────────────────────────
+
+@testset "close(client) is idempotent" begin
+    c = AlphaInfoClient("ai_test_fake")
+    @test c.closed == false
+    close(c)
+    @test c.closed == true
+    close(c)  # must not throw
+    @test c.closed == true
+end
+
+@testset "closed client rejects requests" begin
+    c = AlphaInfoClient("ai_test_fake"; base_url = "http://127.0.0.1:1")
+    close(c)
+    err = nothing
+    try
+        AlphaInfo.analyze(c; signal = zeros(200), sampling_rate = 1.0)
+    catch e
+        err = e
+    end
+    @test err isa AlphaInfo.NetworkError
+    @test occursin("closed", sprint(showerror, err))
+end
