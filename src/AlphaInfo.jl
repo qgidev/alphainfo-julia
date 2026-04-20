@@ -22,7 +22,7 @@ import HTTP
 import JSON3
 
 export AlphaInfoClient,
-       analyze, fingerprint,
+       analyze, analyze_auto, fingerprint,
        analyze_batch, analyze_matrix, analyze_vector,
        audit_list, audit_replay,
        guide, health, plans,
@@ -33,7 +33,7 @@ export AlphaInfoClient,
 import Base: close
 
 const DEFAULT_BASE_URL = "https://www.alphainfo.io"
-const SDK_VERSION = "1.5.11"
+const SDK_VERSION = "1.5.12"
 
 """
     MIN_FINGERPRINT_SAMPLES
@@ -228,7 +228,20 @@ end
 # Endpoints
 # ---------------------------------------------------------------------------
 
-"Run a full structural analysis on a single signal."
+"""
+    analyze(client; signal, sampling_rate, domain="generic", ...)
+
+Run a full structural analysis on a single signal.
+
+`domain` is optional and defaults to `"generic"` (safe universal
+calibration). Pass `"auto"` to have the server infer the calibration
+from the signal — then read `result["domain_applied"]` and
+`result["domain_inference"]`. Specific names (`"biomedical"`,
+`"finance"`, `"seismic"`, ...) apply that calibration directly; aliases
+like `"fintech"` → `"finance"` and `"biomed"` → `"biomedical"` resolve
+server-side; real typos receive HTTP 400 with a "Did you mean ...?"
+suggestion.
+"""
 function analyze(client::AlphaInfoClient; signal, sampling_rate,
                  domain::AbstractString = "generic",
                  baseline = nothing,
@@ -244,6 +257,22 @@ function analyze(client::AlphaInfoClient; signal, sampling_rate,
     use_multiscale === nothing || (body["use_multiscale"] = Bool(use_multiscale))
     raw = _request(client, "POST", "/v1/analyze/stream"; body)
     return JSON3.read(raw, Dict)
+end
+
+"""
+    analyze_auto(client; signal, sampling_rate, kwargs...)
+
+Syntactic sugar for `analyze(client; signal, sampling_rate,
+domain="auto", ...)`. The server picks the calibration from cheap
+signal statistics; inspect `result["domain_inference"]` for the
+confidence and reasoning behind the choice.
+"""
+function analyze_auto(client::AlphaInfoClient; signal, sampling_rate,
+                      baseline = nothing,
+                      include_semantic = nothing,
+                      use_multiscale = nothing)
+    analyze(client; signal, sampling_rate, domain = "auto",
+            baseline, include_semantic, use_multiscale)
 end
 
 """

@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.5.12] - 2026-04-20
+
+Added automatic domain inference; `domain` keyword now optional with
+sensible default.
+
+- `analyze()` docstring expanded to explain `domain="auto"` and the
+  two extra response keys the server populates then:
+  `"domain_applied"` (always) and `"domain_inference"` (only when the
+  caller passed `domain="auto"`).
+- New exported `analyze_auto()` wrapper — sugar for
+  `analyze(...; domain="auto", ...)`.
+- SDK_VERSION bumped 1.5.11 → 1.5.12.
+
+Backwards-compatible.
+
 ## [1.5.11] - 2026-04-20
 
 Connection cleanup improvements.
