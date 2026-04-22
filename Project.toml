@@ -1,7 +1,7 @@
 name = "AlphaInfo"
 uuid = "0a30d68c-ce1e-42bc-855c-952e6ba77051"
 authors = ["QGI Quantum Systems LTDA <contato@alphainfo.io>"]
-version = "1.5.12"
+version = "1.5.13"
 
 [deps]
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
