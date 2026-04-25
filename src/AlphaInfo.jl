@@ -33,7 +33,7 @@ export AlphaInfoClient,
 import Base: close
 
 const DEFAULT_BASE_URL = "https://www.alphainfo.io"
-const SDK_VERSION = "1.5.19"
+const SDK_VERSION = "1.5.20"
 
 """
     MIN_FINGERPRINT_SAMPLES
